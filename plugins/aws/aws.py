@@ -41,7 +41,7 @@ def aws_authenticate(url, username, password, useragent, pluginargs):
 
         # data returned
         data_response = {
-            'result' : None,  # Can be "success", "failure", "throttle", "mfa_blocked"
+            'result' : None,  # Can be "success", "failure", "throttle", "aws_mfa_blocked"
             'error' : False,
             'output' : "",
             'valid_user' : False
@@ -101,7 +101,7 @@ def aws_authenticate(url, username, password, useragent, pluginargs):
                     # Note: Returns MFA if username is correct regardless of what password is
                     if result == "MFA":
 
-                        data_response['result'] = "mfa_blocked"
+                        data_response['result'] = "aws_mfa_blocked"
                         data_response['output'] = f"[+] MFA RESTRICT: => {username_to_print}:{password} - User exists, but requires MFA. Password cannot be determined."
 
                         # TODO: Not sure if there is a native way in credmaster to remove this user from further guesses?
@@ -111,7 +111,7 @@ def aws_authenticate(url, username, password, useragent, pluginargs):
                     elif result == "SUCCESS":
 
                         data_response['result'] = "success"
-                        data_response['output'] = f"[+] SUCCESS: => {username_to_print}:{password} - {text}"
+                        data_response['output'] = f"[+] SUCCESS => {username_to_print}:{password}"
 
                     # Console User - Unknown
                     # Success for unknown use case
