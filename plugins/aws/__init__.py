@@ -10,8 +10,8 @@ def validate(pluginargs, args):
     # --aws_region_spray --> <region> region to target
     # --root -> Trying signing in with the root credentials
     
-    if 'accounts' not in pluginargs.keys():
-        error = "Missing url argument, specify as --accounts <account_id> "
+    if 'account' not in pluginargs.keys():
+        error = "Missing url argument, specify as --account <account_id> "
         return False, error, None
 
     if 'aws_region_spray' in pluginargs.keys():
