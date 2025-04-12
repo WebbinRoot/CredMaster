@@ -34,6 +34,8 @@ class CredMaster(object):
 
 		self.notify_obj = {}
 
+		self.usernames_exclude = []
+
 		self.clean = args.clean
 		self.api_destroy = args.api_destroy
 		self.api_list = args.api_list
@@ -535,35 +537,40 @@ class CredMaster(object):
 						self.jitter_min = 0
 					time.sleep(random.randint(self.jitter_min,self.jitter))
 
-				response = plugin_authentiate(api_dict["proxy_url"], cred["username"], cred["password"], cred["useragent"], pluginargs)
+				if cred["username"] not in self.usernames_exclude:
+					
+					response = plugin_authentiate(api_dict["proxy_url"], cred["username"], cred["password"], cred["useragent"], pluginargs)
 
-				# if "debug" in response.keys():
-				# 	print(response["debug"])
+					if response["error"]:
+						self.log_entry(f"ERROR: {api_key}: {cred['username']} - {response['output']}")
 
-				if response["error"]:
-					self.log_entry(f"ERROR: {api_key}: {cred['username']} - {response['output']}")
+					if response["result"].lower() == "success" and ("userenum" not in pluginargs):
+						self.results.append( {"username" : cred["username"], "password" : cred["password"]} )
+						notify.notify_success(cred["username"], cred["password"], self.notify_obj)
+						self.log_success(cred["username"], cred["password"])
 
-				if response["result"].lower() == "success" and ("userenum" not in pluginargs):
-					self.results.append( {"username" : cred["username"], "password" : cred["password"]} )
-					notify.notify_success(cred["username"], cred["password"], self.notify_obj)
-					self.log_success(cred["username"], cred["password"])
+					if response["result"].lower() == "aws_mfa_blocked":
+						self.usernames_exclude.append(cred["username"])
 
-				if response["valid_user"] or response["result"] == "success":
-					self.log_valid(cred["username"], self.plugin)
+					if response["valid_user"] or response["result"] == "success":
+						self.log_valid(cred["username"], self.plugin)
 
-				if self.color:
+					if self.color:
 
-					if response["result"].lower() == "success":
-						self.log_entry(utils.prGreen(f"{api_key}: {response['output']}"))
+						if response["result"].lower() == "success":
+							self.log_entry(utils.prGreen(f"{api_key}: {response['output']}"))
 
-					elif response["result"].lower() == "potential":
-						self.log_entry(utils.prYellow(f"{api_key}: {response['output']}"))
+						elif response["result"].lower() == "potential":
+							self.log_entry(utils.prYellow(f"{api_key}: {response['output']}"))
+						
+						elif response["result"].lower() == "aws_mfa_blocked":
+							self.log_entry(utils.prYellow(f"{api_key}: {response['output']}"))
 
-					elif response["result"].lower() == "failure":
-						self.log_entry(utils.prRed(f"{api_key}: {response['output']}"))
+						elif response["result"].lower() == "failure":
+							self.log_entry(utils.prRed(f"{api_key}: {response['output']}"))
 
-				else:
-					self.log_entry(f"{api_key}: {response['output']}")
+					else:
+						self.log_entry(f"{api_key}: {response['output']}")
 
 				self.q_spray.task_done()
 			except Exception as ex:
